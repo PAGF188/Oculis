@@ -15,8 +15,6 @@ for f in files:
 plt.rcParams["figure.figsize"] = [50,50]
 f, ax = plt.subplots(1,2)
 
-bgr_to_tsl(imagenes[0])
-
 for i in range(len(imagenes)):
     ax[0].imshow(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2RGB))
     
@@ -25,22 +23,13 @@ for i in range(len(imagenes)):
     imagenes[i] = cv2.GaussianBlur(imagenes[i], (11,11), 0)
     imagenes[i] = shine_removal(imagenes[i])
 
-    m1=get_mtg(imagenes[i])
-    m2=get_mtg2(imagenes[i])
-    m3=get_mtv(imagenes[i])
-    m4=get_mtl(imagenes[i])
-    m5=get_mts(imagenes[i])
-    m6=get_mts2(imagenes[i])
-    m7=get_mmo(imagenes[i])
-    m8=get_mg(imagenes[i])
-    #m=m1+m2+m3+m4+m5+m6+m7+m8
-    m=m8
-    ii,jj=np.where(m>=1)
+    m=segmentar(imagenes[i])
+    ii,jj=np.where(m>=4)
     mascara = np.zeros((m.shape[0],m.shape[1],3),dtype=np.uint8)
     mascara[ii,jj,:]=1
 
     ax[1].imshow(cv2.cvtColor(imagenes[i]*mascara, cv2.COLOR_BGR2RGB))
-    plt.savefig('../borrar/segmentation/'+str(i)+"_m8")
+    #plt.savefig('../borrar/'+str(i)+"segmentation2")
 # #pruebas eliminar brillos
 
 

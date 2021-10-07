@@ -5,6 +5,9 @@ import cv2
 import pdb
 from matplotlib import pyplot as plt
 
+LIMITE_ROJO = 140
+LIMITE_SATURACION = 130
+
 def bgr_to_tsl(image):  # bgr
     
     image = image.astype(float)
@@ -183,30 +186,34 @@ def get_mmo(image,iter=10):
     output = cv2.morphologyEx(output, op=cv2.MORPH_OPEN, kernel=kernel_, iterations=iter)
     return output
 
-def get_mg(image):
-    """
-    Thresholding en el canal G de una imagen BGR usando 
-    la media de la intensidad de toda la imagen. Seguido
-    de "morphological openings".
+def segmentar(image):
     
-    Parameters
-    ----------
-    image : numpy.ndarray | imagen BGR
+    m=None
+    m1=get_mtg(image)
+    m2=get_mtg2(image)
+    m3=get_mtv(image)
+    m4=get_mtl(image)
+    m5=get_mts(image)
+    m6=get_mts2(image)
+    m7=get_mmo(image)
 
-    Returns
-    -------
-    numpy.ndarray | mascara (x,y) -> 1 o 0
-    """
-    output = image[:,:,0]*0
-    umbral = np.mean(image)
-    ix,iy = np.where(image[:,:,1]>=umbral)
-    output[ix,iy]=1
-    kernel_ = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
-    output = cv2.morphologyEx(output, op=cv2.MORPH_GRADIENT, kernel=kernel_)
 
-    res = cv2.findContours(output, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    contours = res[-2]
-    cv2.fillPoly(output,pts=contours,color=(255,255,255))
-    output = ((output - np.min(output)) / (np.max(output) - np.min(output))).astype(np.uint8)
-
-    return output
+    lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    bloque_central = int(image.shape[0]/3)
+    nivel_rojo = np.mean(lab_img[bloque_central:bloque_central*2,:,1])
+    print(nivel_rojo)
+    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    nivel_saturacion = np.max(hsv_img[:,:,1])
+    print(nivel_saturacion)
+    # rojo intenso -> m4,m3,m6 mejores
+    if(nivel_rojo>LIMITE_ROJO):
+        m = m3*3+m4*2+m6*2
+    # imagenes muy claras
+    elif(nivel_saturacion>LIMITE_SATURACION):
+        m = m1*3+m2*2+m5+m7
+    else:
+        m = m1+m2+m3+m4+m5+m6+m7
+    print("\n")
+    return m
+        
+        
