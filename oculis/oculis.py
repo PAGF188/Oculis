@@ -18,18 +18,18 @@ f, ax = plt.subplots(1,2)
 for i in range(len(imagenes)):
     ax[0].imshow(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2RGB))
     
-    # Comienza procesamiento de la imagen
-    
+    #imagenes[i] = shine_removal(imagenes[i])
+
+    # Segmentacion
+    mascara=segmentar(imagenes[i]) 
+    imagenes[i] = imagenes[i]*mascara 
+
+    # Vessel detection
     imagenes[i] = cv2.GaussianBlur(imagenes[i], (11,11), 0)
-    imagenes[i] = shine_removal(imagenes[i])
+    imagenes[i] = cv2.Canny(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2GRAY),1,10)
 
-    m=segmentar(imagenes[i])
-    ii,jj=np.where(m>=4)
-    mascara = np.zeros((m.shape[0],m.shape[1],3),dtype=np.uint8)
-    mascara[ii,jj,:]=1
-
-    ax[1].imshow(cv2.cvtColor(imagenes[i]*mascara, cv2.COLOR_BGR2RGB))
-    #plt.savefig('../borrar/'+str(i)+"segmentation2")
+    ax[1].imshow(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2RGB))
+    plt.savefig('../borrar/'+str(i)+"edge")
 # #pruebas eliminar brillos
 
 

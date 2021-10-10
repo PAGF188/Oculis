@@ -5,8 +5,7 @@ import cv2
 import pdb
 from matplotlib import pyplot as plt
 
-LIMITE_ROJO = 140
-LIMITE_SATURACION = 130
+LIMITE_ROJO = 145
 
 def bgr_to_tsl(image):  # bgr
     
@@ -63,8 +62,9 @@ def get_mtg2(image):
     numpy.ndarray | mascara (x,y) -> 1 o 0 
     """
     output = image[:,:,0]*0
-    bloque_central = int(image.shape[0]/3)
-    umbral = np.mean(image[bloque_central:bloque_central*2,:,1])
+    bloque_central1 = int(image.shape[0]/3)
+    bloque_central2 = int(image.shape[1]/3)
+    umbral = np.mean(image[bloque_central1:bloque_central1*2,bloque_central2:bloque_central2*2:,1])
 
     ix,iy = np.where(image[:,:,1]>=umbral)
     output[ix,iy]=1
@@ -187,7 +187,19 @@ def get_mmo(image,iter=10):
     return output
 
 def segmentar(image):
-    
+    """
+    Identificación automática de la región del ojo a considerar.
+    Dos tipologías de imagen:
+        - Con hiperemia ocular intensa (muy rojas)
+        - 
+    Parameters
+    ----------
+    image : numpy.ndarray | imagen BGR
+
+    Returns
+    -------
+    numpy.ndarray | mascara (x,y) -> 1 o 0
+    """
     m=None
     m1=get_mtg(image)
     m2=get_mtg2(image)
@@ -199,21 +211,30 @@ def segmentar(image):
 
 
     lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-    bloque_central = int(image.shape[0]/3)
-    nivel_rojo = np.mean(lab_img[bloque_central:bloque_central*2,:,1])
+    bloque_central1 = int(image.shape[0]/3)
+    bloque_central2 = int(image.shape[1]/3)
+    nivel_rojo = np.mean(lab_img[bloque_central1:bloque_central1*2,bloque_central2:bloque_central2*2,1])
     print(nivel_rojo)
-    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    nivel_saturacion = np.max(hsv_img[:,:,1])
-    print(nivel_saturacion)
-    # rojo intenso -> m4,m3,m6 mejores
+
     if(nivel_rojo>LIMITE_ROJO):
         m = m3*3+m4*2+m6*2
-    # imagenes muy claras
-    elif(nivel_saturacion>LIMITE_SATURACION):
-        m = m1*3+m2*2+m5+m7
     else:
         m = m1+m2+m3+m4+m5+m6+m7
-    print("\n")
-    return m
+
+    ii,jj=np.where(m>=4)
+    mascara = np.zeros((m.shape[0],m.shape[1]),dtype=np.uint8)
+    mascara[ii,jj]=1
+
+    mascara = cv2.medianBlur(mascara, 15)
+    mascara = cv2.medianBlur(mascara, 15)
+    mascara = cv2.medianBlur(mascara, 15)
+    mascara = cv2.medianBlur(mascara, 15)
+    mascara = cv2.medianBlur(mascara, 15)
+    mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)),iterations=6)
+    
+    
+    aux = np.transpose(mascara)
+    mascara = np.transpose(np.stack((aux,aux,aux)))
+    return mascara
         
         
