@@ -12,8 +12,11 @@ import time
 
 # Globales:
 imagenes = []
+resultados = []
 output_directory = None
 tiempo = 0
+plt.rcParams["figure.figsize"] = [50,50]
+
 # Parser --list
 #     - Si es archivo -> almacenar para procesar.
 #     - Si es directorio -> explorar y almacenar sus archivos para procesar (solo 1 nivel).
@@ -39,33 +42,36 @@ if not os.path.isdir(output_directory):
 
 
 # Procesamiento de cada imagen
-print(" [%s%s] %d/%d [%d%%] in %.2fs"  % ("-" * 0," " * (len(imagenes)-0),0,len(imagenes),0,0),end='\r', flush=True)
-#print(" [%s%s]" % ("-" * 0," " * (len(imagenes)-0)) + " " + str(0)+ "/" + str(len(imagenes)) + "[%s]", end='\r', flush=True)
+print("%d %s" %(len(imagenes), "images are going to be processed...\n"))
+print("%s |%s%s| %d/%d [%d%%] in %.2fs"  % ("Processing...","-" * 0," " * (len(imagenes)-0),0,len(imagenes),0,0),end='\r', flush=True)
 
-plt.rcParams["figure.figsize"] = [50,50]
 f, ax = plt.subplots(1,2)
 i=1
 for img in imagenes:
+    imagen = cv2.imread(img)
+    output = imagen*1
     inicio = time.perf_counter() 
-    time.sleep(1)
-    # ax[0].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+    
+    
     # #img = shine_removal(img)
 
-    # # Segmentacion
-    # mascara=segmentar(img) 
-    # img = img * mascara 
+    # Segmentacion
+    mascara=segmentar(imagen) 
+    output = imagen * mascara 
 
-    # # Vessel detection
-    # #imagenes[i] = cv2.GaussianBlur(imagenes[i], (11,11), 0)
-    # #imagenes[i] = cv2.Canny(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2GRAY),5,15)
+    # Vessel detection
+    #imagenes[i] = cv2.GaussianBlur(imagenes[i], (11,11), 0)
+    #imagenes[i] = cv2.Canny(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2GRAY),5,15)
 
-    # ax[1].imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
-    # plt.savefig('../borrar/'+str(i)+"segmentation3")
-    #sys.stdout.write(u"\u2588")
     fin = time.perf_counter()
+
+    ax[0].imshow(cv2.cvtColor(imagen, cv2.COLOR_BGR2RGB))
+    ax[1].imshow(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
+    plt.savefig(os.path.join(output_directory,str(i-1)+"segmentation3"))
+    
     tiempo += (fin-inicio)
-    print(" [%s%s] %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("-" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
+    print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
     i+=1
 print("\n")
-
+print("%s %s/" %("Saving results in",output_directory))
 

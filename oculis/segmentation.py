@@ -119,7 +119,6 @@ def get_mtl(image):
     output = image[:,:,0]*0
     lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     umbral = np.mean(lab_img[:,:,0])
-    print(umbral)
     ix,iy = np.where(lab_img[:,:,0]>=umbral)
     output[ix,iy]=1
     return output
@@ -229,7 +228,6 @@ def segmentar(image):
     bloque_central1 = int(image.shape[0]/3)
     bloque_central2 = int(image.shape[1]/3)
     nivel_rojo = np.mean(lab_img[bloque_central1:bloque_central1*2,bloque_central2:bloque_central2*2,1])
-    print(nivel_rojo)
 
     if(nivel_rojo>LIMITE_ROJO):
         m = m3*3+m4*2+m6*2
