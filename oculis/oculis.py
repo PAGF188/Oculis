@@ -39,7 +39,7 @@ if not os.path.isdir(output_directory):
 
 
 # Procesamiento de cada imagen
-print(" [%s%s] %d/%d [%d%%]"  % ("-" * 0," " * (len(imagenes)-0),0,len(imagenes),0),end='\r', flush=True)
+print(" [%s%s] %d/%d [%d%%] in %.2fs"  % ("-" * 0," " * (len(imagenes)-0),0,len(imagenes),0,0),end='\r', flush=True)
 #print(" [%s%s]" % ("-" * 0," " * (len(imagenes)-0)) + " " + str(0)+ "/" + str(len(imagenes)) + "[%s]", end='\r', flush=True)
 
 plt.rcParams["figure.figsize"] = [50,50]
@@ -64,7 +64,7 @@ for img in imagenes:
     #sys.stdout.write(u"\u2588")
     fin = time.perf_counter()
     tiempo += (fin-inicio)
-    print(" [%s%s] %d/%d [%d%%] in "  % ("-" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100)),end='\r', flush=True)
+    print(" [%s%s] %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("-" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
     i+=1
 print("\n")
 
