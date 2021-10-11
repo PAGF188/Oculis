@@ -2,16 +2,41 @@
 import cv2
 from segmentation import * 
 from enhancement import *
-from os import listdir
+import os
 from matplotlib import pyplot as plt
+import argparse
+import pdb
 
 
-files = [f for f in listdir("../dataset")]
+# Globales:
 
 imagenes = []
-for f in files:
-    imagenes.append(cv2.imread("../dataset/"+f))
+output_directory = None
 
+# Parser --list
+#     - Si es archivo -> almacenar para procesar
+#     - Si es directorio -> explorar y almacenar sus archivos para procesar (solo 1 nivel)
+# Parser --output
+#     - Si no existe lo creamos
+
+parser = argparse.ArgumentParser(description='Automatic grading of ocular hyperaemia')
+parser.add_argument('-l','--list', nargs='+', help='<Required> Images to process', required=True)
+parser.add_argument('-o','--output', help='<Required> Place to save results', required=True)
+args = parser.parse_args()
+
+for element in args.list:
+    if os.path.isfile(element):
+        imagenes.append(element)
+    elif os.path.isdir(element):
+        for f in os.listdir(element):
+            if os.path.isfile(os.path.join(element,f)):
+                imagenes.append(os.path.join(element,f))
+
+output_directory = args.output
+if not os.path.isdir(output_directory):
+    os.mkdir(output_directory)
+
+exit()
 plt.rcParams["figure.figsize"] = [50,50]
 f, ax = plt.subplots(1,2)
 
