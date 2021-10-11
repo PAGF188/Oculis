@@ -7,6 +7,10 @@ from numpy.core.fromnumeric import shape
 
 max_binary_value = 255
 
+def prueba(img):
+    lab_img = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    
+
 def colour_constancy(img):  #descartado
     for i in range(img.shape[2]):
         img[:,:,i] = (255/np.max(img[:,:,i]))*img[:,:,i]

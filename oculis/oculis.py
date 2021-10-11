@@ -12,6 +12,7 @@ import time
 
 # Globales:
 imagenes = []
+imagenes_bgr = []
 resultados = []
 output_directory = None
 tiempo = 0
@@ -45,33 +46,38 @@ if not os.path.isdir(output_directory):
 print("%d %s" %(len(imagenes), "images are going to be processed...\n"))
 print("%s |%s%s| %d/%d [%d%%] in %.2fs"  % ("Processing...","-" * 0," " * (len(imagenes)-0),0,len(imagenes),0,0),end='\r', flush=True)
 
-f, ax = plt.subplots(1,2)
 i=1
 for img in imagenes:
     imagen = cv2.imread(img)
     output = imagen*1
     inicio = time.perf_counter() 
     
-    
-    # #img = shine_removal(img)
+    #img = shine_removal(img)
 
     # Segmentacion
-    mascara=segmentar(imagen) 
+    mascara=segmentar(imagen,True) 
     output = imagen * mascara 
 
     # Vessel detection
-    #imagenes[i] = cv2.GaussianBlur(imagenes[i], (11,11), 0)
-    #imagenes[i] = cv2.Canny(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2GRAY),5,15)
+    # imagenes[i] = cv2.GaussianBlur(imagenes[i], (11,11), 0)
+    # imagenes[i] = cv2.Canny(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2GRAY),5,15)
 
     fin = time.perf_counter()
 
-    ax[0].imshow(cv2.cvtColor(imagen, cv2.COLOR_BGR2RGB))
-    ax[1].imshow(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
-    plt.savefig(os.path.join(output_directory,str(i-1)+"segmentation3"))
-    
+    imagenes_bgr.append(imagen)
+    resultados.append(output)
     tiempo += (fin-inicio)
     print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
     i+=1
+
 print("\n")
 print("%s %s/" %("Saving results in",output_directory))
+
+i=0
+f, ax = plt.subplots(1,2)
+for im,r in zip(imagenes_bgr,resultados):
+    ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+    ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
+    plt.savefig(os.path.join(output_directory,str(i)+"segmentation1"))
+    i+=1
 

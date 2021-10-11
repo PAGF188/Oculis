@@ -8,13 +8,24 @@ from matplotlib import pyplot as plt
 LIMITE_ROJO = 145
 
 def bgr_to_tsl(image):  # bgr
+    """
+    Convertir imagen bgr a tsl. 
+    Solo calcula los canales S y L
     
+    Parameters
+    ----------
+    image : numpy.ndarray | imagen BGR 
+
+    Returns
+    -------
+    numpy.ndarray | imagen TSL 
+    """
     image = image.astype(float)
     output = (image*0).astype(float)
 
     suma_ = (image[:,:,2]+image[:,:,1]+image[:,:,0])
-    r = np.divide(image[:,:,2],suma_+0.0001)
-    g = np.divide(image[:,:,1],suma_+0.0001)
+    r = np.divide(image[:,:,2],suma_+0.00001)
+    g = np.divide(image[:,:,1],suma_+0.00001)
 
     r_prima = r - 1/3
     g_prima = g - 1/3
@@ -28,19 +39,6 @@ def bgr_to_tsl(image):  # bgr
     output[:,:,2] = 0.299*image[:,:,2]+0.587*image[:,:,1]+0.114*image[:,:,0]
 
     return(output.astype(np.uint8))
-
-def hair(image):
-    m1 = np.ones((image.shape[0],image.shape[1]))
-    lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
-    umbral = 55
-    ix,iy = np.where(lab_img[:,:,0]<umbral)
-    m1[ix,iy]=0
-
-    m2 = np.ones((image.shape[0],image.shape[1]))
-    umbral=10
-    ix,iy = np.where(lab_img[:,:,0]<umbral)
-    m2[ix,iy]=0
-    return (m1*m2).astype(np.uint8)
 
 def get_mtg(image):
     """
@@ -148,7 +146,7 @@ def get_mts(image):
 def get_mts2(image):
     """
     Thresholding en el canal S de una imagen TSL usando 
-    la media del canal S considerando unicamente píxeles no rojos.
+    la media del canal S y considerando unicamente píxeles no rojos.
     
     Parameters
     ----------
@@ -199,12 +197,10 @@ def get_mmo(image,iter=10):
     output = cv2.morphologyEx(output, op=cv2.MORPH_OPEN, kernel=kernel_, iterations=iter)
     return output
 
-def segmentar(image):
+def segmentar(image,post=True):
     """
     Identificación automática de la región del ojo a considerar.
-    Dos tipologías de imagen:
-        - Con hiperemia ocular intensa (muy rojas)
-        - 
+
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR
@@ -228,7 +224,14 @@ def segmentar(image):
     bloque_central1 = int(image.shape[0]/3)
     bloque_central2 = int(image.shape[1]/3)
     nivel_rojo = np.mean(lab_img[bloque_central1:bloque_central1*2,bloque_central2:bloque_central2*2,1])
+    #print(nivel_rojo)
+    
+    # borrar
+    hsv  = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    b = int(hsv.shape[0]/4)
+    print((np.mean(hsv[b:b*2,:,0])+np.mean(hsv[b*3:b*4,:,0]))/2)
 
+    
     if(nivel_rojo>LIMITE_ROJO):
         m = m3*3+m4*2+m6*2
     else:
@@ -238,16 +241,14 @@ def segmentar(image):
     mascara = np.zeros((m.shape[0],m.shape[1]),dtype=np.uint8)
     mascara[ii,jj]=1
 
-    mascara = cv2.medianBlur(mascara, 15)
-    mascara = cv2.medianBlur(mascara, 15)
-    mascara = cv2.medianBlur(mascara, 15)
-    mascara = cv2.medianBlur(mascara, 15)
-    mascara = cv2.medianBlur(mascara, 15)
-    kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)) #np.ones((23,23), np.uint8)
-    mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, kernel, iterations=6)
-    mascara = cv2.morphologyEx(mascara,cv2.MORPH_CLOSE, np.ones((25,25), np.uint8), iterations=1)
-
-    #mascara = mascara * hair(image)
+    if post:
+        mascara = cv2.medianBlur(mascara, 15)
+        mascara = cv2.medianBlur(mascara, 15)
+        mascara = cv2.medianBlur(mascara, 15)
+        mascara = cv2.medianBlur(mascara, 15)
+        mascara = cv2.medianBlur(mascara, 15)
+        kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)) #np.ones((23,23), np.uint8)
+        mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, kernel, iterations=6)
     
     aux = np.transpose(mascara)
     mascara = np.transpose(np.stack((aux,aux,aux)))
