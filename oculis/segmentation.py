@@ -29,6 +29,19 @@ def bgr_to_tsl(image):  # bgr
 
     return(output.astype(np.uint8))
 
+def hair(image):
+    m1 = np.ones((image.shape[0],image.shape[1]))
+    lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    umbral = 55
+    ix,iy = np.where(lab_img[:,:,0]<umbral)
+    m1[ix,iy]=0
+
+    m2 = np.ones((image.shape[0],image.shape[1]))
+    umbral=10
+    ix,iy = np.where(lab_img[:,:,0]<umbral)
+    m2[ix,iy]=0
+    return (m1*m2).astype(np.uint8)
+
 def get_mtg(image):
     """
     Thresholding en el canal G de una imagen BGR usando 
@@ -106,6 +119,7 @@ def get_mtl(image):
     output = image[:,:,0]*0
     lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     umbral = np.mean(lab_img[:,:,0])
+    print(umbral)
     ix,iy = np.where(lab_img[:,:,0]>=umbral)
     output[ix,iy]=1
     return output
@@ -200,6 +214,7 @@ def segmentar(image):
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
     """
+
     m=None
     m1=get_mtg(image)
     m2=get_mtg2(image)
@@ -230,8 +245,11 @@ def segmentar(image):
     mascara = cv2.medianBlur(mascara, 15)
     mascara = cv2.medianBlur(mascara, 15)
     mascara = cv2.medianBlur(mascara, 15)
-    mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)),iterations=6)
-    
+    kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)) #np.ones((23,23), np.uint8)
+    mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, kernel, iterations=6)
+    mascara = cv2.morphologyEx(mascara,cv2.MORPH_CLOSE, np.ones((25,25), np.uint8), iterations=1)
+
+    #mascara = mascara * hair(image)
     
     aux = np.transpose(mascara)
     mascara = np.transpose(np.stack((aux,aux,aux)))
