@@ -4,6 +4,8 @@ import pdb
 from matplotlib import pyplot as plt
 
 LIMITE_ROJO = 145
+MINIMO_MASCARAS = 4
+N_MEDIAN = 4
 
 def bgr_to_tsl(image):  # bgr
     """
@@ -191,7 +193,7 @@ def segmentar(image,post=True):
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
     """
-    
+
     hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     tsl_img = bgr_to_tsl(image)
@@ -204,29 +206,27 @@ def segmentar(image,post=True):
     m5=get_mts(tsl_img)
     m6=get_mts2(tsl_img,hsv_img)
     m7=get_mmo(image)
-
-
     
     bloque_central1 = int(image.shape[0]/3)
     bloque_central2 = int(image.shape[1]/3)
     nivel_rojo = np.mean(lab_img[bloque_central1:bloque_central1*2,bloque_central2:bloque_central2*2,1])
     #print(nivel_rojo)
-       
+    
+    # Ponderacion de las distintas máscaras. m->2D entre 0 y 7
     if(nivel_rojo>LIMITE_ROJO):
         m = m3*3+m4*2+m6*2
     else:
         m = m1+m2+m3+m4+m5+m6+m7
 
-    ii,jj=np.where(m>=4)
+    # Píxeles > MINIMO_MASCARAS 1; caso contrario 0.
+    ii,jj=np.where(m>=MINIMO_MASCARAS)
     mascara = np.zeros((m.shape[0],m.shape[1]),dtype=np.uint8)
     mascara[ii,jj]=1
 
+    # Depuración de la máscara a través de operaciones morfológicas
     if post:
-        mascara = cv2.medianBlur(mascara, 15)
-        mascara = cv2.medianBlur(mascara, 15)
-        mascara = cv2.medianBlur(mascara, 15)
-        mascara = cv2.medianBlur(mascara, 15)
-        mascara = cv2.medianBlur(mascara, 15)
+        for i in range(N_MEDIAN):
+            mascara = cv2.medianBlur(mascara, 15)
         kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)) #np.ones((23,23), np.uint8)
         mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, kernel, iterations=6)
 
@@ -236,6 +236,7 @@ def segmentar(image,post=True):
     # plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
     # plt.savefig("../borrar/" + str(np.random.rand())+".png")
 
+    # Generamos máscara de 3 canales triplicando aux (para poder multiplicar con imagen).
     aux = np.transpose(mascara)
     mascara = np.transpose(np.stack((aux,aux,aux)))
     return mascara

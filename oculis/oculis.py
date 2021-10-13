@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 import argparse
 import pdb
 import time
+import clasification
 
 
 # Globales:
@@ -67,7 +68,7 @@ for img in imagenes:
     output = cv2.morphologyEx(output,cv2.MORPH_CLOSE, np.ones((3,3), np.uint8), iterations=2)
 
     #Clasificacion. Features
-    
+    clasifica(output,imagen)
 
     fin = time.perf_counter()
 
