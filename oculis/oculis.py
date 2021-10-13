@@ -1,4 +1,3 @@
-
 import cv2
 from segmentation import * 
 from enhancement import *
@@ -85,10 +84,9 @@ i=0
 f, ax = plt.subplots(1,2)
 for im,s,r in zip(imagenes_bgr,segmentaciones,resultados):
     vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
-    cv2.imwrite(os.path.join(output_directory,str(i)+"edge3.png"), vis)
+    cv2.imwrite(os.path.join(output_directory,str(i)+"edge4.png"), vis)
     #ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
     # ax[0].imshow(cv2.cvtColor(s, cv2.COLOR_BGR2RGB))
     # ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
     # plt.savefig(os.path.join(output_directory,str(i)+"edge1"))
     i+=1
-

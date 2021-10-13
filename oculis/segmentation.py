@@ -1,12 +1,9 @@
-# M T G , M T G ′ , M T S , M T S ′ , M T V , M T L |  M M G , M M O , M W and M SM .
-
 import numpy as np
 import cv2
 import pdb
 from matplotlib import pyplot as plt
 
 LIMITE_ROJO = 145
-lab_img = None
 
 def bgr_to_tsl(image):  # bgr
     """
@@ -16,7 +13,6 @@ def bgr_to_tsl(image):  # bgr
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR 
-
     Returns
     -------
     numpy.ndarray | imagen TSL 
@@ -49,7 +45,6 @@ def get_mtg(image):
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR 
-
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0 
@@ -68,7 +63,6 @@ def get_mtg2(image):
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR
-
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0 
@@ -82,69 +76,61 @@ def get_mtg2(image):
     output[ix,iy]=1
     return output
 
-def get_mtv(image): 
+def get_mtv(hsv_img):  # HSV
     """
     Thresholding en el canal V de una imagen HSV usando 
     la media del canal V
     
     Parameters
     ----------
-    image : numpy.ndarray | imagen BGR
-
+    image : numpy.ndarray | imagen HSV
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0 
     """
-    output = image[:,:,0]*0
-    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    output = hsv_img[:,:,0]*0
     umbral = np.mean(hsv_img[:,:,2])
     ix,iy = np.where(hsv_img[:,:,2]>=umbral)
     output[ix,iy]=1
     return output
 
-def get_mtl(image):
+def get_mtl(lab_img):  #LAB
     """
     Thresholding en el canal L de una imagen L*a*b* usando 
     la media del canal L
     
     Parameters
     ----------
-    image : numpy.ndarray | imagen BGR
-
+    image : numpy.ndarray | imagen LAB
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
     """
-    output = image[:,:,0]*0
-    lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    output = lab_img[:,:,0]*0
     umbral = np.mean(lab_img[:,:,0])
     ix,iy = np.where(lab_img[:,:,0]>=umbral)
     output[ix,iy]=1
     return output
 
-def get_mts(image):
+def get_mts(tsl_img):  #TSL
     """
     Thresholding en el canal S de una imagen TSL usando 
     la media del canal S
-
     Parameters
     ----------
-    image : numpy.ndarray | imagen BGR
-
+    image : numpy.ndarray | imagen TSL
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
     """
 
-    m1 = image[:,:,0]*0
-
-    tsl_img = bgr_to_tsl(image)
+    m1 = tsl_img[:,:,0]*0
     umbral = np.mean(tsl_img[:,:,1])
     ix,iy = np.where(tsl_img[:,:,1]<=umbral)
     m1[ix,iy]=1
     return m1
 
-def get_mts2(image):
+def get_mts2(tsl_img,hsv_img):
     """
     Thresholding en el canal S de una imagen TSL usando 
     la media del canal S y considerando unicamente píxeles no rojos.
@@ -152,22 +138,19 @@ def get_mts2(image):
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR
-
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
     """
 
-    m1 = image[:,:,0]*0
-    m2 = image[:,:,0]*0
-    m3 = image[:,:,0]*0
+    m1 = tsl_img[:,:,0]*0
+    m2 = tsl_img[:,:,0]*0
+    m3 = tsl_img[:,:,0]*0
 
-    tsl_img = bgr_to_tsl(image)
     umbral = np.mean(tsl_img[:,:,1])
     ix,iy = np.where(tsl_img[:,:,1]<=umbral)
     m1[ix,iy]=1
 
-    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     ix,iy = np.where(np.logical_or(np.logical_and(hsv_img[:,:,0]>=213,hsv_img[:,:,0]<=255),np.logical_and(hsv_img[:,:,0]>=0,hsv_img[:,:,0]<=21)))
     m2[ix,iy] = 1
 
@@ -185,7 +168,6 @@ def get_mmo(image,iter=10):
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR
-
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
@@ -201,27 +183,30 @@ def get_mmo(image,iter=10):
 def segmentar(image,post=True):
     """
     Identificación automática de la región del ojo a considerar.
-
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR
-
+    post: True | False
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
     """
+    
+    hsv_img = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    tsl_img = bgr_to_tsl(image)
 
     m=None
     m1=get_mtg(image)
     m2=get_mtg2(image)
-    m3=get_mtv(image)
-    m4=get_mtl(image)
-    m5=get_mts(image)
-    m6=get_mts2(image)
+    m3=get_mtv(hsv_img)
+    m4=get_mtl(lab_img)
+    m5=get_mts(tsl_img)
+    m6=get_mts2(tsl_img,hsv_img)
     m7=get_mmo(image)
 
 
-    lab_img = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    
     bloque_central1 = int(image.shape[0]/3)
     bloque_central2 = int(image.shape[1]/3)
     nivel_rojo = np.mean(lab_img[bloque_central1:bloque_central1*2,bloque_central2:bloque_central2*2,1])
@@ -254,5 +239,3 @@ def segmentar(image,post=True):
     aux = np.transpose(mascara)
     mascara = np.transpose(np.stack((aux,aux,aux)))
     return mascara
-        
-        
