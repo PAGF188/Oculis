@@ -7,8 +7,16 @@ from numpy.core.fromnumeric import shape
 
 max_binary_value = 255
 
-def prueba(img):
+def adjust_gamma(image, gamma=1.0):  #descartado
+	table = np.array([((i / 255.0) ** gamma) * 255
+		for i in np.arange(0, 256)]).astype("uint8")
+	return cv2.LUT(image, table)
+
+def prueba(img):  #descartado
     lab_img = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+    if np.mean(lab_img[:,:,0])<100:
+        img = adjust_gamma(img,0.5)
+    return(img)
     
 
 def colour_constancy(img):  #descartado

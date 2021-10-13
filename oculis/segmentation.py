@@ -6,6 +6,7 @@ import pdb
 from matplotlib import pyplot as plt
 
 LIMITE_ROJO = 145
+lab_img = None
 
 def bgr_to_tsl(image):  # bgr
     """
@@ -225,13 +226,7 @@ def segmentar(image,post=True):
     bloque_central2 = int(image.shape[1]/3)
     nivel_rojo = np.mean(lab_img[bloque_central1:bloque_central1*2,bloque_central2:bloque_central2*2,1])
     #print(nivel_rojo)
-    
-    # borrar
-    hsv  = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    b = int(hsv.shape[0]/4)
-    print((np.mean(hsv[b:b*2,:,0])+np.mean(hsv[b*3:b*4,:,0]))/2)
-
-    
+       
     if(nivel_rojo>LIMITE_ROJO):
         m = m3*3+m4*2+m6*2
     else:
@@ -249,7 +244,13 @@ def segmentar(image,post=True):
         mascara = cv2.medianBlur(mascara, 15)
         kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)) #np.ones((23,23), np.uint8)
         mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, kernel, iterations=6)
-    
+
+    # borrar
+    # contours, hierarchy = cv2.findContours(mascara, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # cv2.drawContours(image, contours, -1, (255, 23, 0), 1, 8)
+    # plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    # plt.savefig("../borrar/" + str(np.random.rand())+".png")
+
     aux = np.transpose(mascara)
     mascara = np.transpose(np.stack((aux,aux,aux)))
     return mascara

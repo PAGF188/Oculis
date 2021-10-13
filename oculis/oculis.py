@@ -14,6 +14,7 @@ import time
 imagenes = []
 imagenes_bgr = []
 resultados = []
+segmentaciones = []
 output_directory = None
 tiempo = 0
 plt.rcParams["figure.figsize"] = [50,50]
@@ -51,16 +52,23 @@ for img in imagenes:
     imagen = cv2.imread(img)
     output = imagen*1
     inicio = time.perf_counter() 
-    
+
     #img = shine_removal(img)
 
     # Segmentacion
     mascara=segmentar(imagen,True) 
     output = imagen * mascara 
+    segmentaciones.append(imagen*mascara)
 
-    # Vessel detection
-    # imagenes[i] = cv2.GaussianBlur(imagenes[i], (11,11), 0)
-    # imagenes[i] = cv2.Canny(cv2.cvtColor(imagenes[i], cv2.COLOR_BGR2GRAY),5,15)
+    # Vessel detection. Canny_blurred detector
+    # output = cv2.morphologyEx(cv2.cvtColor(output, cv2.COLOR_BGR2GRAY), cv2.MORPH_GRADIENT, np.ones((2,2), np.uint8))
+    output = histogram_eq(output)
+    output = cv2.GaussianBlur(output, (11,11), 0)
+    output = cv2.Canny(cv2.cvtColor(output, cv2.COLOR_BGR2GRAY),5,30)
+    output = cv2.morphologyEx(output,cv2.MORPH_CLOSE, np.ones((3,3), np.uint8), iterations=2)
+
+    #Clasificacion. Features
+    
 
     fin = time.perf_counter()
 
@@ -75,9 +83,12 @@ print("%s %s/" %("Saving results in",output_directory))
 
 i=0
 f, ax = plt.subplots(1,2)
-for im,r in zip(imagenes_bgr,resultados):
-    ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-    ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
-    plt.savefig(os.path.join(output_directory,str(i)+"segmentation1"))
+for im,s,r in zip(imagenes_bgr,segmentaciones,resultados):
+    vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
+    cv2.imwrite(os.path.join(output_directory,str(i)+"edge3.png"), vis)
+    #ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
+    # ax[0].imshow(cv2.cvtColor(s, cv2.COLOR_BGR2RGB))
+    # ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
+    # plt.savefig(os.path.join(output_directory,str(i)+"edge1"))
     i+=1
 
