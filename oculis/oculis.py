@@ -1,20 +1,22 @@
 import cv2
 from segmentation import * 
 from enhancement import *
+from clasification import *
 import os
 import sys
 from matplotlib import pyplot as plt
 import argparse
 import pdb
 import time
-import clasification
+import json
 
 
 # Globales:
 imagenes = []
 imagenes_bgr = []
-resultados = []
 segmentaciones = []
+resultados = []
+etiquetas = []
 output_directory = None
 tiempo = 0
 plt.rcParams["figure.figsize"] = [50,50]
@@ -28,6 +30,7 @@ plt.rcParams["figure.figsize"] = [50,50]
 parser = argparse.ArgumentParser(description='Automatic grading of ocular hyperaemia')
 parser.add_argument('-l','--list', nargs='+', help='<Required> Images to process', required=True)
 parser.add_argument('-o','--output', help='<Required> Place to save results', required=True)
+parser.add_argument('-e','--evaluar', help='<Optional> json to evaluate', required=False)
 args = parser.parse_args()
 
 for element in args.list:
@@ -49,37 +52,48 @@ print("%s |%s%s| %d/%d [%d%%] in %.2fs"  % ("Processing...","-" * 0," " * (len(i
 
 i=1
 for img in imagenes:
+    print(img)
     imagen = cv2.imread(img)
-    output = imagen*1
     inicio = time.perf_counter() 
 
     #img = shine_removal(img)
 
     # Segmentacion
     mascara=segmentar(imagen,True) 
-    output = imagen * mascara 
-    segmentaciones.append(imagen*mascara)
+    roi = imagen * mascara 
 
     # Vessel detection. Canny_blurred detector
-    # output = cv2.morphologyEx(cv2.cvtColor(output, cv2.COLOR_BGR2GRAY), cv2.MORPH_GRADIENT, np.ones((2,2), np.uint8))
-    output = histogram_eq(output)
-    output = cv2.GaussianBlur(output, (11,11), 0)
-    output = cv2.Canny(cv2.cvtColor(output, cv2.COLOR_BGR2GRAY),5,30)
-    output = cv2.morphologyEx(output,cv2.MORPH_CLOSE, np.ones((3,3), np.uint8), iterations=2)
+    # vasos = cv2.morphologyEx(cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY), cv2.MORPH_GRADIENT, np.ones((2,2), np.uint8))
+    vasos = histogram_eq(roi)
+    vasos = cv2.GaussianBlur(vasos, (11,11), 0)
+    vasos = cv2.Canny(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY),5,30)  # 5 30
+    vasos = cv2.morphologyEx(vasos,cv2.MORPH_CLOSE, np.ones((3,3), np.uint8), iterations=2)
 
     #Clasificacion. Features
-    clasifica(output,imagen)
+    etiqueta = clasificar(imagen,mascara,vasos)
 
     fin = time.perf_counter()
 
     imagenes_bgr.append(imagen)
-    resultados.append(output)
+    segmentaciones.append(roi)
+    resultados.append(vasos)
+    etiquetas.append(etiqueta)
     tiempo += (fin-inicio)
-    print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
+    #print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
     i+=1
 
 print("\n")
+
+if args.evaluar is not None and os.path.isfile(args.evaluar):
+    with open(args.evaluar) as f:
+        data = json.load(f)
+        acierto = evaluar(imagenes,etiquetas,data)
+        print("Acierto:",acierto)
+
+print("\n")
 print("%s %s/" %("Saving results in",output_directory))
+
+exit()
 
 i=0
 f, ax = plt.subplots(1,2)
