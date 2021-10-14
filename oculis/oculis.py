@@ -12,10 +12,10 @@ import json
 
 
 # Globales:
-imagenes = []
-imagenes_bgr = []
-segmentaciones = []
-resultados = []
+imagenes = []        # nombre imágenes
+imagenes_bgr = []    # imágenes np.array
+segmentaciones = []  
+resultado_vasos = []
 etiquetas = []
 output_directory = None
 tiempo = 0
@@ -26,6 +26,8 @@ plt.rcParams["figure.figsize"] = [50,50]
 #     - Si es directorio -> explorar y almacenar sus archivos para procesar (solo 1 nivel).
 # Parser --output
 #     - Si no existe lo creamos.
+# Parser --evaluar
+#     - Si se pasa archivo anotaciones json evaluamos etiquetas predichas con reales.
 
 parser = argparse.ArgumentParser(description='Automatic grading of ocular hyperaemia')
 parser.add_argument('-l','--list', nargs='+', help='<Required> Images to process', required=True)
@@ -52,13 +54,12 @@ print("%s |%s%s| %d/%d [%d%%] in %.2fs"  % ("Processing...","-" * 0," " * (len(i
 
 i=1
 for img in imagenes:
-    print(img)
     imagen = cv2.imread(img)
     inicio = time.perf_counter() 
 
     #img = shine_removal(img)
 
-    # Segmentacion
+    # Segmentación
     mascara=segmentar(imagen,True) 
     roi = imagen * mascara 
 
@@ -69,21 +70,23 @@ for img in imagenes:
     vasos = cv2.Canny(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY),5,30)  # 5 30
     vasos = cv2.morphologyEx(vasos,cv2.MORPH_CLOSE, np.ones((3,3), np.uint8), iterations=2)
 
-    #Clasificacion. Features
+    # Clasificación.
     etiqueta = clasificar(imagen,mascara,vasos)
 
     fin = time.perf_counter()
 
+    # Almacenamos resultados
     imagenes_bgr.append(imagen)
-    segmentaciones.append(roi)
-    resultados.append(vasos)
-    etiquetas.append(etiqueta)
+    segmentaciones.append(roi)      # resultado segmentación
+    resultado_vasos.append(vasos)   # resultado identificación vasos
+    etiquetas.append(etiqueta)      # resultado clasificación
     tiempo += (fin-inicio)
-    #print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
+    print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
     i+=1
 
 print("\n")
 
+# Evaluar si argumento json dado.
 if args.evaluar is not None and os.path.isfile(args.evaluar):
     with open(args.evaluar) as f:
         data = json.load(f)
@@ -95,9 +98,10 @@ print("%s %s/" %("Saving results in",output_directory))
 
 exit()
 
+# Salvar resultados a figura
 i=0
 f, ax = plt.subplots(1,2)
-for im,s,r in zip(imagenes_bgr,segmentaciones,resultados):
+for im,s,r in zip(imagenes_bgr,segmentaciones,resultado_vasos):
     vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
     cv2.imwrite(os.path.join(output_directory,str(i)+"edge4.png"), vis)
     #ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))

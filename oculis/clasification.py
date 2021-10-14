@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import pdb
-from matplotlib import pyplot as plt
 import os
 
 
@@ -32,6 +31,19 @@ def clasificar(imagen,mascara,venas):
     return 1
 
 def evaluar(imagenes_n,etiquetas,json):
+    """
+    Evaluar el acierto en la clasificación. 
+    
+    Parameters
+    ----------
+    imagenes_n : [str] | nombre de la imagen
+    etiquetas : [int]  | etiqueta asociada
+    json : dict | nombres - etiquetas_reales
+
+    Returns
+    -------
+    float | acierto 
+    """
     sum = 0
     for im,et in zip(imagenes_n,etiquetas):
         comparacion = [x for x in json['imagenes'] if x['nombre'] == os.path.basename(im)]
