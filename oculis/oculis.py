@@ -65,7 +65,7 @@ for img in imagenes:
     #img = shine_removal(img)
 
     # Segmentación
-    mascara=segmentar(imagen,True) 
+    mascara=segmentar(imagen,True,True) 
     roi = imagen * mascara 
 
     # Vessel detection. Canny_blurred detector

@@ -7,6 +7,15 @@ LIMITE_ROJO = 145
 MINIMO_MASCARAS = 4
 N_MEDIAN = 4
 
+def pinta_mascara(mascara,image):
+    """
+    Función auxiliar: Pinta la mascara sobre la imagen
+    """
+    contours, hierarchy = cv2.findContours(mascara, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(image, contours, -1, (255, 23, 0), 2, 8)
+    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+    plt.savefig("../borrar/segmentation_over/" + str(np.random.rand())+".png")
+
 def bgr_to_tsl(image):  # bgr
     """
     Convertir imagen bgr a tsl. 
@@ -182,13 +191,15 @@ def get_mmo(image,iter=10):
     output = cv2.morphologyEx(output, op=cv2.MORPH_OPEN, kernel=kernel_, iterations=iter)
     return output
 
-def segmentar(image,post=True):
+def segmentar(image,post=True,pintar=False):
     """
     Identificación automática de la región del ojo a considerar.
     Parameters
     ----------
     image : numpy.ndarray | imagen BGR
-    post: True | False
+    post: True | False | indica si realizar operaciones morfológicas para mejorar ROI
+    pintar: True | False | indica si pintar máscara sobre imagen original y salvar resultado
+
     Returns
     -------
     numpy.ndarray | mascara (x,y) -> 1 o 0
@@ -230,11 +241,8 @@ def segmentar(image,post=True):
         kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)) #np.ones((23,23), np.uint8)
         mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, kernel, iterations=6)
 
-    # borrar
-    # contours, hierarchy = cv2.findContours(mascara, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    # cv2.drawContours(image, contours, -1, (255, 23, 0), 1, 8)
-    # plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-    # plt.savefig("../borrar/" + str(np.random.rand())+".png")
+    if pintar: # pintar mascara sobre imagen para comparaciones
+        pinta_mascara(mascara,image)
 
     # Generamos máscara de 3 canales triplicando aux (para poder multiplicar con imagen).
     aux = np.transpose(mascara)
