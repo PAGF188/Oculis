@@ -144,7 +144,7 @@ def get_mts(tsl_img):  #TSL
 def get_mts2(tsl_img,hsv_img):
     """
     Thresholding en el canal S de una imagen TSL usando 
-    la media del canal S y considerando unicamente píxeles no rojos.
+    la media del canal S y considerando únicamente píxeles no rojos.
     
     Parameters
     ----------
@@ -237,7 +237,7 @@ def segmentar(image,post=True,pintar=False):
     # Depuración de la máscara a través de operaciones morfológicas
     if post:
         for i in range(N_MEDIAN):
-            mascara = cv2.medianBlur(mascara, 15)
+            mascara = cv2.medianBlur(mascara, 17)
         kernel =  cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (23,23)) #np.ones((23,23), np.uint8)
         mascara = cv2.morphologyEx(mascara,cv2.MORPH_OPEN, kernel, iterations=6)
 

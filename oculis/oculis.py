@@ -108,9 +108,9 @@ print("%s %s/" %("Saving results in",output_directory))
 # Salvar resultados a figura
 i=0
 f, ax = plt.subplots(1,2)
-for im,s,r in zip(imagenes_bgr,segmentaciones,resultado_vasos):
+for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
     #vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
-    cv2.imwrite(os.path.join(output_directory,str(i)+"segmentation.png"), s) # vis
+    cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)), s) # vis
     #ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
     # ax[0].imshow(cv2.cvtColor(s, cv2.COLOR_BGR2RGB))
     # ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
