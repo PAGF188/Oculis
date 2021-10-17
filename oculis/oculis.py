@@ -62,10 +62,10 @@ for img in imagenes:
     imagen = cv2.imread(img)
     inicio = time.perf_counter() 
 
-    #img = shine_removal(img)
+    # img = shine_removal(img)
 
     # Segmentación
-    mascara=segmentar(imagen,True,True) 
+    mascara=segmentar(imagen,True,False) 
     roi = imagen * mascara 
 
     # Vessel detection. Canny_blurred detector
@@ -94,7 +94,7 @@ for img in imagenes:
 print("\n")
 
 arbol(X,Y)
-exit()
+
 # Evaluar si argumento json dado.
 if args.evaluar is not None and os.path.isfile(args.evaluar):
     with open(args.evaluar) as f:
@@ -105,13 +105,12 @@ if args.evaluar is not None and os.path.isfile(args.evaluar):
 print("\n")
 print("%s %s/" %("Saving results in",output_directory))
 
-exit()
 # Salvar resultados a figura
 i=0
 f, ax = plt.subplots(1,2)
 for im,s,r in zip(imagenes_bgr,segmentaciones,resultado_vasos):
-    vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
-    cv2.imwrite(os.path.join(output_directory,str(i)+"edge5.png"), r) # vis
+    #vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
+    cv2.imwrite(os.path.join(output_directory,str(i)+"segmentation.png"), s) # vis
     #ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
     # ax[0].imshow(cv2.cvtColor(s, cv2.COLOR_BGR2RGB))
     # ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
