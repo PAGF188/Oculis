@@ -3,10 +3,8 @@ from segmentation import *
 from enhancement import *
 from clasification import *
 import os
-import sys
 from matplotlib import pyplot as plt
 import argparse
-import pdb
 import time
 import json
 
@@ -65,15 +63,16 @@ for img in imagenes:
     # img = shine_removal(img)
 
     # Segmentación
-    mascara=segmentar(imagen,True,False) 
+    mascara = segmentar(imagen,True,False) 
     roi = imagen * mascara 
 
-    # Vessel detection. Canny_blurred detector
-    # vasos = cv2.morphologyEx(cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY), cv2.MORPH_GRADIENT, np.ones((2,2), np.uint8))
+    # Localización de vasos. Canny_blurred detector
+    # vasos = cv2.morphologyEx(cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY), cv2.MORPH_GRADIENT, np.ones((2,2), np.uint8)) descartado
     vasos = histogram_eq(roi)
     vasos = cv2.GaussianBlur(vasos, (13,13), 0)
     vasos = cv2.Canny(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY),5,30)  # 5 30
     #vasos = cv2.morphologyEx(vasos,cv2.MORPH_CLOSE, np.ones((3,3), np.uint8), iterations=2)
+
 
     # Clasificación.
     features = clasificar(imagen,mascara,roi,vasos)
@@ -85,7 +84,7 @@ for img in imagenes:
     # Almacenamos resultados
     imagenes_bgr.append(imagen)
     segmentaciones.append(roi)      # resultado segmentación
-    resultado_vasos.append(vasos)   # resultado identificación vasos
+    resultado_vasos.append(vasos)   # resultado localización vasos
     #etiquetas.append(etiqueta)      # resultado clasificación
     tiempo += (fin-inicio)
     #print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
@@ -106,13 +105,32 @@ print("\n")
 print("%s %s/" %("Saving results in",output_directory))
 
 # Salvar resultados a figura
-i=0
+i=1
 f, ax = plt.subplots(1,2)
 for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
     #vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
-    cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)), s) # vis
+    cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)), r) # vis
+    #cv2.imwrite(str(i)+".png", r) # vis
     #ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
     # ax[0].imshow(cv2.cvtColor(s, cv2.COLOR_BGR2RGB))
     # ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
     # plt.savefig(os.path.join(output_directory,str(i)+"edge1"))
     i+=1
+
+
+
+
+
+"""
+Notas:
+    Alternativas consideradas a detectar vasos:
+
+    1) 
+    vasos = roi*0
+    lab_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2LAB)
+    ix,iy = np.where(lab_roi[:,:,1]>=140)
+    vasos[ix,iy,:]=255
+
+
+    2)
+"""

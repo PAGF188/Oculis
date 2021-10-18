@@ -1,6 +1,5 @@
 import numpy as np
 import cv2
-import pdb
 from matplotlib import pyplot as plt
 
 LIMITE_ROJO = 145

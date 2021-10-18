@@ -1,9 +1,5 @@
 import numpy as np
 import cv2
-import pdb
-import matplotlib.pyplot as plt
-from numpy.core.fromnumeric import shape
-
 
 max_binary_value = 255
 
@@ -24,7 +20,7 @@ def colour_constancy(img):  #descartado
         img[:,:,i] = (255/np.max(img[:,:,i]))*img[:,:,i]
     return img
 
-def histogram_eq(img): #descartado
+def histogram_eq(img):
 
     ycrcb_img = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
     ycrcb_img[:, :, 0] = cv2.equalizeHist(ycrcb_img[:, :, 0])

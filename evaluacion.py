@@ -1,8 +1,6 @@
 import cv2
 import os
-import sys
 import argparse
-import pdb
 import numpy as np
 from matplotlib import pyplot as plt
 
