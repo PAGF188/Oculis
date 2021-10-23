@@ -22,7 +22,7 @@ etiquetas = []        #
 output_directory = None
 tiempo = 0
 max_binary_value = 255
-plt.rcParams["figure.figsize"] = [50,50]
+plt.rcParams["figure.figsize"] = [15,10]
 
 # Parser --list
 #     - Si es archivo -> almacenar para procesar.
@@ -60,7 +60,7 @@ print("%s |%s%s| %d/%d [%d%%] in %.2fs"  % ("Processing...","-" * 0," " * (len(i
 
 i=1
 for img in imagenes:
-    print(img)
+    #print(img)
     imagen = cv2.imread(img)
     inicio = time.perf_counter() 
 
@@ -79,7 +79,7 @@ for img in imagenes:
         vasos = cv2.GaussianBlur(vasos, (13,13), 0)
         vasos = cv2.Canny(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY),5,30)  # 5 30
     # Aproximación 2: "Local threshold" con función propia.
-    elif(metodo == 'local_t'):
+    else:
         block_size = 21
         k=1
         func = lambda a: (a[len(a)//2]<=a.mean()+5 and a[len(a)//2]<=np.mean(a)-5).astype(int)*255
@@ -90,7 +90,7 @@ for img in imagenes:
     # CLASIFICACIÓN  -------------------------------------------
     vasos = vasos * mascara_brillos
     features = get_features(imagen,mascara,roi,vasos)
-    etiqueta = predict(features)
+    etiqueta = predict(features,metodo)
     X.append(features)
     fin = time.perf_counter()
 
@@ -100,10 +100,13 @@ for img in imagenes:
     resultado_vasos.append(vasos)   # resultado localización vasos
     etiquetas.append(etiqueta)      # resultado predicción
     tiempo += (fin-inicio)
-    #print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
+    print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
     i+=1
 
 print("\n")
+
+print(Y)
+print(etiquetas)
 
 arbol(X,Y)
 
@@ -112,38 +115,28 @@ if args.evaluar is not None and os.path.isfile(args.evaluar):
     with open(args.evaluar) as f:
         data = json.load(f)
         acierto = evaluar(imagenes,etiquetas,data)
-        print("Acierto:",acierto)
+        print("Acierto: ",acierto*100)
 
 print("\n")
 print("%s %s/" %("Saving results in",output_directory))
 
 # Salvar resultados a figura
+
 i=1
-f, ax = plt.subplots(1,2)
-for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
-    #vis = cv2.hconcat([cv2.cvtColor(s, cv2.COLOR_BGR2GRAY), r])
-    cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)), r) # vis
-    #cv2.imwrite(str(i)+".png", r) # vis
-    #ax[0].imshow(cv2.cvtColor(im, cv2.COLOR_BGR2RGB))
-    # ax[0].imshow(cv2.cvtColor(s, cv2.COLOR_BGR2RGB))
-    # ax[1].imshow(cv2.cvtColor(r, cv2.COLOR_BGR2RGB))
-    # plt.savefig(os.path.join(output_directory,str(i)+"edge1"))
+f, ax = plt.subplots(1,3)
+for nombre,im,s,r,e in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos,etiquetas):
+    ax[0].imshow(cv2.cvtColor(im.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    ax[0].set_title(nombre)
+    ax[1].imshow(cv2.cvtColor(s.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    ax[2].imshow(cv2.cvtColor(r.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    ax[2].set_title("Predicho: " + str(e+1))
+    plt.savefig(os.path.join(output_directory,os.path.basename(nombre))+".png")
     i+=1
 
 
-
-
-
-"""
-Notas:
-    Alternativas consideradas a detectar vasos:
-
-    1) 
-    vasos = roi*0
-    lab_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2LAB)
-    ix,iy = np.where(lab_roi[:,:,1]>=140)
-    vasos[ix,iy,:]=255
-
-
-    2)
-"""
+# #### Versión rápida
+# i=1
+# f, ax = plt.subplots(1,2)
+# for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
+#     cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)), r) 
+#     i+=1
