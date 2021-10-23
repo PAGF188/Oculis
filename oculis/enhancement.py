@@ -1,7 +1,14 @@
+import pdb
 import numpy as np
 import cv2
 
 max_binary_value = 255
+
+def power_law(im,gamma):
+    im = im.astype(float)
+    min_im, max_im = np.min(im), np.max(im)          
+    im = (im - min_im) / (max_im - min_im)
+    return (255*np.power(im,gamma)).astype(np.uint8)
 
 def adjust_gamma(image, gamma=1.0):  #descartado
 	table = np.array([((i / 255.0) ** gamma) * 255
@@ -16,8 +23,7 @@ def prueba(img):  #descartado
     
 
 def colour_constancy(img):  #descartado
-    for i in range(img.shape[2]):
-        img[:,:,i] = (255/np.max(img[:,:,i]))*img[:,:,i]
+    img = (255/np.max(img))*img
     return img
 
 def histogram_eq(img):
@@ -28,9 +34,10 @@ def histogram_eq(img):
     return equalized_img
 
 def shine_removal(img):  
+    aux = np.ones((img.shape[0],img.shape[1]))
     lab_img = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     mask = cv2.threshold(lab_img[:,:,0], 240, max_binary_value, cv2.THRESH_BINARY)[1]
     mask = cv2.dilate(src=mask, kernel=np.ones((3, 3)), iterations=5)
     ii,jj = np.where(mask!=0)
-    img[ii,jj,:]=0
-    return(img)
+    aux[ii,jj]=0
+    return(aux)

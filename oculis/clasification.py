@@ -23,27 +23,14 @@ def f1(mascara, venas):
     """
     return(len(np.where(venas==255)[0])/len(np.where(mascara[:,:,0]==1)[0]))
 
-def f2(roi):
-    """
-    Calcular el nivel máximo de rojo de la conjuntiva
-    
-    Parameters
-    ----------
-    roi : numpy.ndarray (n x m x c) BGR | conjuntiva
-    
-    Returns
-    -------
-    float | nivel de rojo
-    """
-    return np.max(roi[:,:,2])
-
 def f3(roi,mascara):
     """
-    Canal a de imagen LAB
+    Calcular el nivel de rojo de la conjuntiva a partir del
+    canal A de imagen LAB
     
     Parameters
     ----------
-    roi : numpy.ndarray (n x m x c) LAB | conjuntiva
+    roi : numpy.ndarray (n x m x c) | LAB | conjuntiva
     mascara : numpy.ndarray (n x m x c) | imagen binaria (0,1)
     
     Returns
@@ -52,16 +39,33 @@ def f3(roi,mascara):
     """
     return np.sum(roi[:,:,1])/len(np.where(mascara[:,:,0]==1)[0])
 
-def f4(roi,mascara):
-    return np.sum(np.abs(128-roi[:,:,0]))/len(np.where(mascara[:,:,0]==1)[0])
 
-def clasificar(imagen,mascara,roi,venas):
-    area=f1(mascara,venas)
-    max_rojo = f2(roi)
-    lab = f3(cv2.cvtColor(roi, cv2.COLOR_BGR2LAB),mascara)
-    hsv = f4(cv2.cvtColor(roi, cv2.COLOR_BGR2HSV),mascara)
+def f5(roi,venas):
+    """
+    Calcular el nivel de rojo de los vasos.
+    
+    Parameters
+    ----------
+    roi : numpy.ndarray (n x m x c) | LAB | conjuntiva
+    venas : numpy.ndarray (n x m x c) | imagen binaria (0,255)
+    
+    Returns
+    -------
+    float | suma roi * venas (solo píxeles de vasos) / área vasos
+    """
+    min, max = np.min(venas), np.max(venas)          
+    aux = (venas - min) / (max - min)
+    aux = aux.astype(np.uint8)
+    return np.sum(roi[:,:,1]*venas)/len(np.where(aux==1)[0])
 
-    return [area,max_rojo,lab,hsv]
+def get_features(imagen,mascara,roi,venas):
+    area = f1(mascara,venas)
+    rojo_general = f3(cv2.cvtColor(roi, cv2.COLOR_BGR2LAB),mascara)
+    rojo_vasos = f5(cv2.cvtColor(roi, cv2.COLOR_BGR2LAB),venas)
+    return [area,rojo_general,rojo_vasos]
+
+def predict(features):
+    return 1
 
 def evaluar(imagenes_n,etiquetas,json):
     """

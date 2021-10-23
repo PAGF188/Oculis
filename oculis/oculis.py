@@ -7,20 +7,21 @@ from matplotlib import pyplot as plt
 import argparse
 import time
 import json
-
+from skimage.filters import threshold_local
 
 # borrar
 X = []
 Y = [2,0,1,2,0,0,1,0,2,0]
 
 # Globales:
-imagenes = []        # nombre imágenes
-imagenes_bgr = []    # imágenes np.array
-segmentaciones = []  
-resultado_vasos = []
-etiquetas = []
+imagenes = []         # nombre imágenes
+imagenes_bgr = []     # imágenes np.array
+segmentaciones = []   # mascara 0|1
+resultado_vasos = []  # mascara 0|255
+etiquetas = []        # 
 output_directory = None
 tiempo = 0
+max_binary_value = 255
 plt.rcParams["figure.figsize"] = [50,50]
 
 # Parser --list
@@ -34,6 +35,8 @@ plt.rcParams["figure.figsize"] = [50,50]
 parser = argparse.ArgumentParser(description='Automatic grading of ocular hyperaemia')
 parser.add_argument('-l','--list', nargs='+', help='<Required> Images to process', required=True)
 parser.add_argument('-o','--output', help='<Required> Place to save results', required=True)
+parser.add_argument('-m','--method', help='<canny | local_t> vessel localization methodology', 
+                    type=str, default='canny', choices=['canny', 'local_t'])
 parser.add_argument('-e','--evaluar', help='<Optional> json to evaluate', required=False)
 args = parser.parse_args()
 
@@ -49,6 +52,7 @@ output_directory = args.output
 if not os.path.isdir(output_directory):
     os.mkdir(output_directory)
 
+metodo = args.method
 
 # Procesamiento de cada imagen
 print("%d %s" %(len(imagenes), "images are going to be processed...\n"))
@@ -60,32 +64,41 @@ for img in imagenes:
     imagen = cv2.imread(img)
     inicio = time.perf_counter() 
 
-    # img = shine_removal(img)
+    # OBTENER MASCARA BRILLOS -----------------------------------
+    mascara_brillos = shine_removal(imagen)
 
-    # Segmentación
+    # SEGMENTACIÓN ----------------------------------------------
     mascara = segmentar(imagen,True,False) 
     roi = imagen * mascara 
 
-    # Localización de vasos. Canny_blurred detector
-    # vasos = cv2.morphologyEx(cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY), cv2.MORPH_GRADIENT, np.ones((2,2), np.uint8)) descartado
+    # LOCALIZACIÓN DE VASOS -------------------------------------
     vasos = histogram_eq(roi)
-    vasos = cv2.GaussianBlur(vasos, (13,13), 0)
-    vasos = cv2.Canny(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY),5,30)  # 5 30
-    #vasos = cv2.morphologyEx(vasos,cv2.MORPH_CLOSE, np.ones((3,3), np.uint8), iterations=2)
+    
+    # # Aproximación 1: Canny_blurred detector
+    if(metodo == 'canny'):
+        vasos = cv2.GaussianBlur(vasos, (13,13), 0)
+        vasos = cv2.Canny(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY),5,30)  # 5 30
+    # Aproximación 2: "Local threshold" con función propia.
+    elif(metodo == 'local_t'):
+        block_size = 21
+        k=1
+        func = lambda a: (a[len(a)//2]<=a.mean()+5 and a[len(a)//2]<=np.mean(a)-5).astype(int)*255
+        vasos = threshold_local(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY), block_size, 'generic', param=func)
+        vasos = cv2.medianBlur(vasos.astype(np.uint8), 5)
+        vasos = cv2.medianBlur(vasos.astype(np.uint8), 3)
 
-
-    # Clasificación.
-    features = clasificar(imagen,mascara,roi,vasos)
+    # CLASIFICACIÓN  -------------------------------------------
+    vasos = vasos * mascara_brillos
+    features = get_features(imagen,mascara,roi,vasos)
+    etiqueta = predict(features)
     X.append(features)
-
-
     fin = time.perf_counter()
 
-    # Almacenamos resultados
+    # ALMACENAMOS RESULTADOS DE CADA ETAPA ---------------------
     imagenes_bgr.append(imagen)
     segmentaciones.append(roi)      # resultado segmentación
     resultado_vasos.append(vasos)   # resultado localización vasos
-    #etiquetas.append(etiqueta)      # resultado clasificación
+    etiquetas.append(etiqueta)      # resultado predicción
     tiempo += (fin-inicio)
     #print("%s |%s%s| %d/%d [%d%%] in %.2fs (eta: %.2fs)"  % ("Processing...",u"\u2588" * i," " * (len(imagenes)-i),i,len(imagenes),int(i/len(imagenes)*100),tiempo,(fin-inicio)*(len(imagenes)-i)),end='\r', flush=True)
     i+=1
