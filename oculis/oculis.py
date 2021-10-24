@@ -81,8 +81,9 @@ for img in imagenes:
     # Aproximación 2: "Local threshold" con función propia.
     else:
         block_size = 21
-        k=1
-        func = lambda a: (a[len(a)//2]<=a.mean()+5 and a[len(a)//2]<=np.mean(a)-5).astype(int)*255
+        k=5
+        t_media = np.mean(vasos)
+        func = lambda a: (a[len(a)//2]<=a.mean()+k and a[len(a)//2]<=np.mean(a)-k).astype(int)*255
         vasos = threshold_local(cv2.cvtColor(vasos, cv2.COLOR_BGR2GRAY), block_size, 'generic', param=func)
         vasos = cv2.medianBlur(vasos.astype(np.uint8), 5)
         vasos = cv2.medianBlur(vasos.astype(np.uint8), 3)
@@ -122,21 +123,20 @@ print("%s %s/" %("Saving results in",output_directory))
 
 # Salvar resultados a figura
 
-i=1
-f, ax = plt.subplots(1,3)
-for nombre,im,s,r,e in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos,etiquetas):
-    ax[0].imshow(cv2.cvtColor(im.astype(np.uint8), cv2.COLOR_BGR2RGB))
-    ax[0].set_title(nombre)
-    ax[1].imshow(cv2.cvtColor(s.astype(np.uint8), cv2.COLOR_BGR2RGB))
-    ax[2].imshow(cv2.cvtColor(r.astype(np.uint8), cv2.COLOR_BGR2RGB))
-    ax[2].set_title("Predicho: " + str(e+1))
-    plt.savefig(os.path.join(output_directory,os.path.basename(nombre))+".png")
-    i+=1
+# i=1
+# f, ax = plt.subplots(1,3)
+# for nombre,im,s,r,e in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos,etiquetas):
+#     ax[0].imshow(cv2.cvtColor(im.astype(np.uint8), cv2.COLOR_BGR2RGB))
+#     ax[0].set_title(nombre)
+#     ax[1].imshow(cv2.cvtColor(s.astype(np.uint8), cv2.COLOR_BGR2RGB))
+#     ax[2].imshow(cv2.cvtColor(r.astype(np.uint8), cv2.COLOR_BGR2RGB))
+#     ax[2].set_title("Predicho: " + str(e+1))
+#     plt.savefig(os.path.join(output_directory,os.path.basename(nombre))+".png")
+#    i+=1
 
 
 # #### Versión rápida
-# i=1
-# f, ax = plt.subplots(1,2)
-# for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
-#     cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)), r) 
-#     i+=1
+i=1
+for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
+    cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)+".png"), r) 
+    i+=1

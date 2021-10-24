@@ -4,7 +4,7 @@ import cv2
 
 max_binary_value = 255
 
-def power_law(im,gamma):
+def power_law(im,gamma):      #descartado
     im = im.astype(float)
     min_im, max_im = np.min(im), np.max(im)          
     im = (im - min_im) / (max_im - min_im)
