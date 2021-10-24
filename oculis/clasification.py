@@ -60,16 +60,16 @@ def predict(features, metodo):
         else:  # si muy rojo -> 2
             return 2
     elif metodo == 'local_t':
-        if features[0] <= 0.23:
+        if features[0] <= 0.23:  # poca area 0
             return 0
-        else:
-            if features[1] <= 35181:
+        else:                    # mucha area
+            if features[1] <= 35181:    # y poco rojez ->0
                 return 0
             else:
-                if features[1] <= 36492:
+                if features[1] <= 36492:   # y rojez media -> 1
                     return 1
                 else:
-                    return 2
+                    return 2               # y rojez elevada -> 2
             
 
 def evaluar(imagenes_n,etiquetas,json):

@@ -106,10 +106,11 @@ for img in imagenes:
 
 print("\n")
 
-print(Y)
-print(etiquetas)
 
-arbol(X,Y)
+#print(Y)
+#print(etiquetas)
+
+#arbol(X,Y)
 
 # Evaluar si argumento json dado.
 if args.evaluar is not None and os.path.isfile(args.evaluar):
@@ -121,22 +122,22 @@ if args.evaluar is not None and os.path.isfile(args.evaluar):
 print("\n")
 print("%s %s/" %("Saving results in",output_directory))
 
-# Salvar resultados a figura
+# Salvar resultados
 
-# i=1
-# f, ax = plt.subplots(1,3)
-# for nombre,im,s,r,e in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos,etiquetas):
-#     ax[0].imshow(cv2.cvtColor(im.astype(np.uint8), cv2.COLOR_BGR2RGB))
-#     ax[0].set_title(nombre)
-#     ax[1].imshow(cv2.cvtColor(s.astype(np.uint8), cv2.COLOR_BGR2RGB))
-#     ax[2].imshow(cv2.cvtColor(r.astype(np.uint8), cv2.COLOR_BGR2RGB))
-#     ax[2].set_title("Predicho: " + str(e+1))
-#     plt.savefig(os.path.join(output_directory,os.path.basename(nombre))+".png")
-#    i+=1
-
-
-# #### Versión rápida
 i=1
-for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
-    cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)+".png"), r) 
+f, ax = plt.subplots(1,3)
+for nombre,im,s,r,e in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos,etiquetas):
+    ax[0].imshow(cv2.cvtColor(im.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    ax[0].set_title(nombre)
+    ax[1].imshow(cv2.cvtColor(s.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    ax[2].imshow(cv2.cvtColor(r.astype(np.uint8), cv2.COLOR_BGR2RGB))
+    ax[2].set_title("Predicho: " + str(e))
+    plt.savefig(os.path.join(output_directory,os.path.basename(nombre))+".png")
     i+=1
+
+
+# # #### Versión rápida
+# i=1
+# for nombre,im,s,r in zip(imagenes,imagenes_bgr,segmentaciones,resultado_vasos):
+#     cv2.imwrite(os.path.join(output_directory,os.path.basename(nombre)+".png"), r) 
+#     i+=1
