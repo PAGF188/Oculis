@@ -88,6 +88,7 @@ for img in imagenes:
         vasos = cv2.medianBlur(vasos.astype(np.uint8), 5)
         vasos = cv2.medianBlur(vasos.astype(np.uint8), 3)
 
+
     # CLASIFICACIÓN  -------------------------------------------
     vasos = vasos * mascara_brillos
     features = get_features(imagen,mascara,roi,vasos)
